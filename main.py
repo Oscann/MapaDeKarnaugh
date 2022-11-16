@@ -8,10 +8,10 @@ identifiers = [
 ]
 
 mapa = [
-    [0, 1],
-    [1, 1],
-    [1, 1],
-    [1, 1]
+    [0, 0],
+    [0, 0],
+    [0, 0],
+    [0, 0]
 ]
 
 groups = []
@@ -20,15 +20,15 @@ touched1s = []
 
 
 def main():
-    # print("Informe a saída da tabela a medida que forem aparecendo (ordem A - B - C")
-    # for A in range(2):
-    #     for B in range(2):
-    #         for C in range(2):
-    #             output = int(input(f"{A} - {B} - {C}  : "))
+    print("Informe a saída da tabela a medida que forem aparecendo (ordem A - B - C")
+    for A in range(2):
+        for B in range(2):
+            for C in range(2):
+                output = int(input(f"{A} - {B} - {C}  : "))
 
-    #             mapCoords = getCoordsOnTerm(bool(A), bool(B), bool(C))
+                mapCoords = getCoordsOnTerm(bool(A), bool(B), bool(C))
 
-    #             mapa[mapCoords[0]][mapCoords[1]] = output
+                mapa[mapCoords[0]][mapCoords[1]] = output
 
     for i in range(4):
         print(mapa[i])
@@ -44,7 +44,6 @@ def makeEquation():
     equation = ""
 
     createSeparationka()
-    print("After separation")
 
     # GET THE COORDINATES > TEST IF THE IDENTIFIERS FOR EACH COORD IS DIFFERENT -- IF NOT
     # REMOVE FROM THE FIRST TERM > CONCATENATE EVERY LETTER > ADD TO EQUATIOn
@@ -89,7 +88,9 @@ def createSeparationka():
 
             if (i, j) in touched1s or mapa[i][j] == 0:
                 continue
-            createGroups(i, j)
+            success = createGroups(i, j)
+
+            clearDoubles(success)
 
     # Second try on groups
 
@@ -102,12 +103,9 @@ def createSeparationka():
         if e not in groups:
             continue
 
-        result = createGroups(e[0][0], e[0][1], False)
+        success = createGroups(e[0][0], e[0][1], False)
 
-        if result:
-            for tupla in groups[-1]:
-                if [tupla] in groups:
-                    groups.remove([tupla])
+        clearDoubles(success)
 
     clearSingles()
 
@@ -118,26 +116,20 @@ def createSeparationka():
         for j in range(2):
             if (i, j) in touched1s or mapa[i][j] == 0:
                 continue
-            createPairs(i, j)
+            success = createPairs(i, j)
+
+            clearDoubles(success)
 
     # Second try on pair checking
     singleGroups = [x for x in groups if len(x) == 1]
 
     for e in singleGroups:
-        print(e not in groups)
         if e not in groups:
             continue
 
-        result = createPairs(e[0][0], e[0][1], False)
+        success = createPairs(e[0][0], e[0][1], False)
 
-        print(e, result)
-
-        if result:
-            print(groups[-1])
-            for tupla in groups[-1]:
-                print(tupla)
-                if [tupla] in groups:
-                    groups.remove([tupla])
+        clearDoubles(success)
 
 
 def createGroups(i: int, j: int, toogleTouch: bool = True):
@@ -199,9 +191,6 @@ def createPairs(i: int, j: int, toogleTouch: bool = True):
 
     global groups
 
-    if (i, j) in touched1s or mapa[i][j] == 0:
-        return True
-
     if (mapa[cycleY(i - 1)][j] == 1 and ((cycleY(i - 1), j) not in touched1s or not toogleTouch)
         and not
         (
@@ -241,6 +230,7 @@ def createPairs(i: int, j: int, toogleTouch: bool = True):
         return True
 
     single = [(i, j)]
+
     # Else, just make it lonely
     if (single not in groups):
         groups.append(single)
@@ -254,6 +244,16 @@ def clearSingles():
     for e in groups:
         if len(e) == 1:
             groups.remove(e)
+
+
+def clearDoubles(success: bool):
+
+    global groups
+
+    if success:
+        for tupla in groups[-1]:
+            if [tupla] in groups:
+                groups.remove([tupla])
 
 
 def getCoordsOnTerm(A: bool, B: bool, C: bool):
