@@ -1,4 +1,4 @@
-from utils import cycleX, cycleY
+from utils import checkHasOnlyOnes, cycleX, cycleY
 
 identifiers = [
     [["!A", "!B", "!C"], ["!A", "!B", "C"]],
@@ -8,53 +8,75 @@ identifiers = [
 ]
 
 mapa = [
-    [1, 1],
-    [1, 1],
     [0, 1],
-    [0, 1]
+    [1, 1],
+    [1, 1],
+    [1, 1]
 ]
 
 groups = []
 
 touched1s = []
-touched1s2 = []
-
-# test for:
-# all 1 --- done
-# long vertical line --- done
-# 2 x 2 --- done
-# horizontal line --- done
-# vertical line --- done
-
-# do:
-# equation
 
 
 def main():
-    createSeparationka()
-    print(groups)
+    # print("Informe a saída da tabela a medida que forem aparecendo (ordem A - B - C")
+    # for A in range(2):
+    #     for B in range(2):
+    #         for C in range(2):
+    #             output = int(input(f"{A} - {B} - {C}  : "))
+
+    #             mapCoords = getCoordsOnTerm(bool(A), bool(B), bool(C))
+
+    #             mapa[mapCoords[0]][mapCoords[1]] = output
+
+    for i in range(4):
+        print(mapa[i])
+
+    equation = makeEquation()
+
+    print(equation)
 
 
 def makeEquation():
+    global groups
     groups = []
     equation = ""
 
     createSeparationka()
+    print("After separation")
 
     # GET THE COORDINATES > TEST IF THE IDENTIFIERS FOR EACH COORD IS DIFFERENT -- IF NOT
-    # REMOVE FROM THE FIRST TERM > CONCATENATE EVERY LETTER > ADD TO EQUATION
+    # REMOVE FROM THE FIRST TERM > CONCATENATE EVERY LETTER > ADD TO EQUATIOn
+
     for i in range(len(groups)):
-        first_coord = groups[i][0]
-        first_term = identifiers[first_coord[0]][first_coord[1]]
+        group = groups[i]
+        first_coord = group[0]
 
+        # Equals to first term
+        base_term = identifiers[first_coord[0]][first_coord[1]].copy()
 
-def checkHasOnlyOnes(_set: set):
-    if len(_set) == 1 and 1 in _set:
-        return True
-    return False
+        for j in range(len(group)):
+            term = identifiers[group[j][0]][group[j][1]]
+
+            for letterIndex in range(len(term)):
+                if base_term[letterIndex] != term[letterIndex]:
+                    base_term[letterIndex] = ""
+
+        term = "".join(base_term)
+
+        if term != "":
+            equation += term
+
+            if i + 1 != len(groups):
+                equation += " + "
+
+    return equation
 
 
 def createSeparationka():
+
+    global groups
 
     is_all_1 = {mapa[i][j] for j in range(2) for i in range(4)}
 
@@ -70,23 +92,26 @@ def createSeparationka():
             createGroups(i, j)
 
     # Second try on groups
-    print("Before second try", groups)
-    for e in groups:
-        if len(e) == 1:
-            if (e[0][0], e[0][1]) in touched1s2:
-                continue
 
-            result = createGroups(e[0][0], e[0][1], False)
+    # O FOR DO PYTHON É TÃO BOSTA QUE RETIRAR UM ELEMENTO DO ITERABLE VAI FAZER COM QUE A
+    # VARIÁVEL DE CONTROLE ADIANTE UMA CASA
+    singleGroups = [x for x in groups if len(x) == 1]
 
-            if result:
-                for tupla in groups[-1]:
-                    if [tupla] in groups:
-                        groups.remove([tupla])
+    for e in singleGroups:
+
+        if e not in groups:
+            continue
+
+        result = createGroups(e[0][0], e[0][1], False)
+
+        if result:
+            for tupla in groups[-1]:
+                if [tupla] in groups:
+                    groups.remove([tupla])
 
     clearSingles()
 
-    touched1s.extend(touched1s2)
-
+    # Not make pairs based on the ones who already got a group
     # Pair checking
 
     for i in range(4):
@@ -95,17 +120,32 @@ def createSeparationka():
                 continue
             createPairs(i, j)
 
-    for e in groups:
-        if len(e) == 1:
-            if (e[0][0], e[0][1]) in touched1s2:
-                continue
-            result = createPairs(e[0][0], e[0][1], False)
-            print(result)
+    # Second try on pair checking
+    singleGroups = [x for x in groups if len(x) == 1]
+
+    for e in singleGroups:
+        print(e not in groups)
+        if e not in groups:
+            continue
+
+        result = createPairs(e[0][0], e[0][1], False)
+
+        print(e, result)
+
+        if result:
+            print(groups[-1])
+            for tupla in groups[-1]:
+                print(tupla)
+                if [tupla] in groups:
+                    groups.remove([tupla])
 
 
 def createGroups(i: int, j: int, toogleTouch: bool = True):
+
+    global groups
+
     long_line = {mapa[k][j]
-                 if (k, j) not in (touched1s if toogleTouch else touched1s2)
+                 if (k, j) not in touched1s or not toogleTouch
                  else 0
                  for k in range(4)
                  }
@@ -113,14 +153,14 @@ def createGroups(i: int, j: int, toogleTouch: bool = True):
     if checkHasOnlyOnes(long_line):
         group = [(m, j) for m in range(4)]
 
-        touched1s.extend(group) if toogleTouch else touched1s2.extend(group)
+        touched1s.extend(group)
         groups.append(group)
         return True
 
     # Check 2x2
 
     _2x2 = {mapa[cycleY(i + k)][cycleX(j + l)]
-            if ((cycleY(i + k), cycleX(j + l)) not in (touched1s if toogleTouch else touched1s2))
+            if ((cycleY(i + k), cycleX(j + l)) not in touched1s or not toogleTouch)
             else 0
             for k in range(2) for l in range(2)
             }
@@ -129,12 +169,12 @@ def createGroups(i: int, j: int, toogleTouch: bool = True):
         group = [(cycleY(i + k), cycleX(j + l))
                  for k in range(2) for l in range(2)]
 
-        touched1s.extend(group) if toogleTouch else touched1s2.extend(group)
+        touched1s.extend(group)
         groups.append(group)
         return True
 
     neg_2x2 = {mapa[cycleY(i - k)][cycleX(j - l)]
-               if ((cycleY(i - k), cycleX(j - l)) not in (touched1s if toogleTouch else touched1s2))
+               if ((cycleY(i - k), cycleX(j - l)) not in touched1s or not toogleTouch)
                else 0
                for k in range(2) for l in range(2)
                }
@@ -143,21 +183,26 @@ def createGroups(i: int, j: int, toogleTouch: bool = True):
         group = [(cycleY(i - k), cycleX(j - l))
                  for k in range(2) for l in range(2)]
 
-        touched1s.extend(group) if toogleTouch else touched1s2.extend(group)
+        touched1s.extend(group)
         groups.append(group)
         return True
 
-    # Else, just make it lonely
     single = [(i, j)]
-    groups.append(single)
+
+    # Else, just make it lonely
+    if (single not in groups):
+        groups.append(single)
     return False
 
 
 def createPairs(i: int, j: int, toogleTouch: bool = True):
+
+    global groups
+
     if (i, j) in touched1s or mapa[i][j] == 0:
         return True
 
-    if (mapa[cycleY(i - 1)][j] == 1 and ((cycleY(i - 1), j) not in (touched1s if toogleTouch else touched1s2))
+    if (mapa[cycleY(i - 1)][j] == 1 and ((cycleY(i - 1), j) not in touched1s or not toogleTouch)
         and not
         (
             (mapa[cycleY(i - 2)][j] == 1 and (cycleY(i - 2), j) not in touched1s)
@@ -167,12 +212,12 @@ def createPairs(i: int, j: int, toogleTouch: bool = True):
 
         pair = [(i, j), (cycleY(i - 1), j)]
 
-        touched1s.extend(pair) if toogleTouch else touched1s2.extend(pair)
+        touched1s.extend(pair)
         groups.append(pair)
         return True
 
     # Lower vertical
-    if (mapa[cycleY(i + 1)][j] == 1 and ((cycleY(i + 1), j) not in (touched1s if toogleTouch else touched1s2))
+    if (mapa[cycleY(i + 1)][j] == 1 and ((cycleY(i + 1), j) not in touched1s or not toogleTouch)
             and not
             (
                 (mapa[cycleY(i + 2)][j] ==
@@ -183,30 +228,49 @@ def createPairs(i: int, j: int, toogleTouch: bool = True):
 
         pair = [(i, j), (cycleY(i + 1), j)]
 
-        touched1s.extend(pair) if toogleTouch else touched1s2.extend(pair)
+        touched1s.extend(pair)
         groups.append(pair)
         return True
 
     # Horizontal
-    if (mapa[i][cycleX(j + 1)] == 1 and ((i, cycleX(j + 1)) not in (touched1s if toogleTouch else touched1s2))):
-        print(touched1s)
+    if (mapa[i][cycleX(j + 1)] == 1 and ((cycleY(i + 1), j) not in touched1s or not toogleTouch)):
         pair = [(i, j), (i, cycleX(j + 1))]
 
-        touched1s.extend(pair) if toogleTouch else touched1s2.extend(pair)
+        touched1s.extend(pair)
         groups.append(pair)
         return True
 
-    # Else, just make it lonely
     single = [(i, j)]
-    groups.append(single)
+    # Else, just make it lonely
+    if (single not in groups):
+        groups.append(single)
 
     return False
 
 
 def clearSingles():
+    global groups
+
     for e in groups:
         if len(e) == 1:
             groups.remove(e)
+
+
+def getCoordsOnTerm(A: bool, B: bool, C: bool):
+
+    global identifiers
+
+    _A = ("A" if A else "!A")
+    _B = ("B" if B else "!B")
+    _C = ("C" if C else "!C")
+
+    term_for_test = _A + _B + _C
+
+    for line in range(len(identifiers)):
+        for col in range(len(identifiers[line])):
+            currentTerm = "".join(identifiers[line][col])
+            if (term_for_test == currentTerm):
+                return (line, col)
 
 
 main()

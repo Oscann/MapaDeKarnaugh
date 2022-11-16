@@ -16,3 +16,9 @@ def cycleY(y):
         y += 4
 
     return y
+
+
+def checkHasOnlyOnes(_set: set):
+    if len(_set) == 1 and 1 in _set:
+        return True
+    return False
