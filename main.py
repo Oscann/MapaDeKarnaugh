@@ -94,8 +94,6 @@ def createSeparationka():
 
     # Second try on groups
 
-    # O FOR DO PYTHON É TÃO BOSTA QUE RETIRAR UM ELEMENTO DO ITERABLE VAI FAZER COM QUE A
-    # VARIÁVEL DE CONTROLE ADIANTE UMA CASA
     singleGroups = [x for x in groups if len(x) == 1]
 
     for e in singleGroups:
